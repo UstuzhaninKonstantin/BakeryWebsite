@@ -2,7 +2,14 @@
 
 {% block content %}
 
-<h2>Пока в разработке</h2>
-<p><h2><a href="/task">Вернуться на страницу с покупками</a></h2></p>
+<center><p><h1>{{ info[product][0] }}</h1></p></center>
 
+<p>
+    <center><img src={{ path }} alt="картинка" width="380px" height="380px"></center>
+</p>
+
+<center>
+  <h1>Цена: {{ info[product][1] }}руб</h1>
+    <a href={{ path2 }}><h1>Купить</h1></a>
+</center>
 {% endblock %}

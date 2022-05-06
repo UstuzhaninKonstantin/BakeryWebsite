@@ -3,7 +3,7 @@ from flask_login import LoginManager, login_user, current_user, login_required, 
 
 from data import db_session
 from data.users import User
-from forms.add_comments import LeaveComment
+from forms.buy import BuyForm
 from forms.register import RegisterForm
 from forms.login import LoginForm
 
@@ -11,6 +11,27 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 login_manager = LoginManager()
 login_manager.init_app(app)
+
+
+CITIES = ['Москва', 'Казань', 'Санкт-Петербург', 'Пермь', 'Киров',
+          'Белая Холуница', 'Ижевск', 'Воронеж', 'Уфа', 'Челябинск', 'Краснодар']
+PRICES = {
+        'beliy_hleb': ['Белый хлеб', 45],
+        'cheburek': ['Чебурек с мясом', 180],
+        'cherniy_hleb': ['Черный хлеб', 45],
+        'djokonda': ['Пирожное "Джоконда"', 199],
+        'echpochmak': ['Эчпочмак', 99],
+        'izum': ['Пирожок с изюмом', 29],
+        'kapusta': ['Пирожок с капустой', 29],
+        'kruassan': ['Круассан', 69],
+        'kulich': ['Кулич', 199],
+        'napoleon': ['Торт "Наполеон"', 499],
+        'pizza': ['Мини-пицца', 49],
+        'ponchik': ['Пончик', 49],
+        'samsa': ['Самса', 49],
+        'sosiska': ['Сосиска в тесте', 29],
+        'vatrushka': ['Ватрушка', 15]
+    }
 
 
 def main():
@@ -24,10 +45,40 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/comments")
+def comments():
+    return render_template("comments.html")
+
+
+@app.route('/card_information/<product>/<cost>', methods=['GET', 'POST'])
+def card_info(product, cost):
+    global PRICES, CITIES
+    rus_product = PRICES[product][0]
+    form = BuyForm()
+    if form.validate_on_submit():
+        if form.city.data not in CITIES:
+            error = 'Нет доставки в ваш город'
+            back = '/card_information/' + product + '/' + cost
+            return render_template('error.html', error=error, back=back)
+        for element in form:
+            print(element)
+        return redirect('/thanks_for_buying')
+    return render_template('card_info.html', product=rus_product, cost=cost, form=form)
+
+
+@app.route('/thanks_for_buying')
+def thanks_for_buying():
+    return render_template('thanks_for_buying.html')
+
+
 @app.route("/buy/<product>")
 @login_required
-def del_job(product):
-    return render_template('buy.html')
+def buy_product(product):
+    global PRICES
+    string = '/static/img/' + product + '.png'
+    path2 = '/card_information/' + product + '/' + str(PRICES[product][1])
+    print(path2)
+    return render_template('buy.html', product=product, info=PRICES, path=string, path2=path2)
 
 
 @login_manager.user_loader
@@ -36,7 +87,6 @@ def load_user(user_id):
     return db_sess.query(User).get(user_id)
 
 
-@app.route("/", methods=['GET', 'POST'])
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -46,9 +96,9 @@ def login():
         if user and user.check_password(form.password.data):
             login_user(user, remember=True)
             return redirect("/")
-        return render_template('login.html',
-                               message="Неправильный логин или пароль",
-                               form=form)
+        return render_template('error.html',
+                               error="Неправильный логин или пароль",
+                               back='/login')
     return render_template('login.html', form=form)
 
 
@@ -57,12 +107,10 @@ def reqister():
     form = RegisterForm()
     if form.validate_on_submit():
         if form.password.data != form.password_again.data:
-            return render_template('register.html', title='Регистрация', form=form,
-                                   message="Пароли не совпадают")
+            return render_template('error.html', error="Пароли не совпадают", back='/register')
         db_sess = db_session.create_session()
         if db_sess.query(User).filter(User.email == form.email.data).first():
-            return render_template('register.html', title='Регистрация', form=form,
-                                   message="Такой пользователь уже есть")
+            return render_template('error.html', error="Такой пользователь уже есть", back='/register')
         user = User(
             name=form.name.data,
             surname=form.surname.data,
@@ -88,76 +136,6 @@ def logout():
 def task():
     return render_template('tasks.html')
 
-
-'''
-@app.route("/news_delete/<int:id_job>")
-@login_required
-def del_job(id_job):
-    db_sess = db_session.create_session()
-    job = db_sess.query(Jobs).filter(Jobs.id == id_job).first()
-    db_sess.delete(job)
-    db_sess.commit()
-    return redirect('/index')
-
-
-@app.route('/add_jobs', methods=['GET', 'POST'])
-def add_jobs():
-    form = AddJobs()
-    if form.validate_on_submit():
-        job = Jobs()
-        job.job = form.job.data
-        job.work_size = form.work_size.data
-        job.collaborators = form.collaborators.data
-        job.team_leader = form.leader.data
-        job.start_date = form.start.data
-        job.end_date = form.end.data
-        db_sess = db_session.create_session()
-        db_sess.add(job)
-        db_sess.commit()
-        return redirect('/index')
-    return render_template('tasks.html', form=form)
-
-
-@app.route('/news_edit/<int:id_job>', methods=['GET', 'POST'])
-def edit_jobs(id_job):
-    form = AddJobs()
-    db_sess = db_session.create_session()
-    jober = db_sess.query(Jobs).filter(Jobs.id == id_job).first()
-    if request.method == 'GET':
-        form.job.data = jober.job
-        form.work_size.data = jober.work_size
-        form.collaborators.data = jober.collaborators
-        form.leader.data = jober.team_leader
-        form.start.data = jober.start_date
-        form.end.data = jober.end_date
-
-    if form.validate_on_submit():
-        jober.job = form.job.data
-        jober.work_size = form.work_size.data
-        jober.collaborators = form.collaborators.data
-        jober.team_leader = form.leader.data
-        jober.start_date = form.start.data
-        jober.end_date = form.end.data
-        db_sess.commit()
-        return redirect('/index')
-    return render_template('tasks.html', form=form)
-
-
-@app.route('/add/<header>/<content>/<id>/<int:private>')
-@app.route('/add/<header>/<content>')
-def news(header, content, private=0, id=1):
-    db_sess = db_session.create_session()
-    news = News()
-    news.title = header
-    news.content = content
-    news.is_private = private
-    news.user_id = id
-    db_sess.add(news)
-    db_sess.commit()
-    return redirect('/')
-
-
-'''
 
 if __name__ == '__main__':
     main()

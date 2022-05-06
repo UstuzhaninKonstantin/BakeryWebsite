@@ -1,11 +1,7 @@
 {% extends "base.html" %}
 
-{% block left %}
-<h4>Регистрация</h4>
-{% endblock %}
-
 {% block content %}
-
+<p><h1><center>Регистрация</center></h1></p>
 <form action="" method="post">
     {{ form.hidden_tag() }}
     {% for field in form if field.name not in ['submit', 'csrf_token'] %}

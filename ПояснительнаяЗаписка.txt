@@ -1,0 +1,42 @@
+Объем кода:
+ - Python:
+       - data:
+         - _all_models.py: 1
+         - db_session.py: 33
+         - users.py: 28
+         Итого: 62
+       - forms:
+         - buy.py: 14
+         - login.py: 10
+         - register.py: 13
+         Итого: 37
+       - main.py: 141
+ Всего строк кода на Python: 240
+ - HTML:
+   - base.html: 54
+   - buy.html: 15
+   - card_info.html: 21
+   - comments.html: 6
+   - error.html: 8
+   - index.html: 33
+   - login.html: 20
+   - register.html: 20
+   - tasks.html: 22
+   - thanks_for_buying.html: 6
+ Всего строк кода на HTML: 205
+ - CSS:
+   style.css: 26
+ Всего строк кода на CSS: 26
+
+Итого строк кода: 471
+
+
+requirements.txt: присутствует
+bootstrap: используется
+шаблоны: используются
+orm-модели: нет
+регистрация и авторизация: да
+загрузка и использование файлов: да
+api rest: нет
+хранение данных: БД
+хостинг: заблокирован в россии
